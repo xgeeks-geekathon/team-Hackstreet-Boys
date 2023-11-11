@@ -56,6 +56,7 @@ class Stest:
 
         return True
 
+
     # @brief Creates the default config file
     # @param path Path to the config file
     def __create_config_file(self, path: str, language: str) -> None:
@@ -64,11 +65,13 @@ class Stest:
         with open(path, "w") as f:
             json.dump(DEFAULT_CONFIG, f, indent=4)
 
+
     # @brief Loads the config file
     # @param path Path to the config file
     def __load_config_file(self, path: str) -> None:
         with open(path, "r") as f:
             self.config = json.load(f)
+
 
     # @brief Saves the config file
     # @param path Path to the config file
@@ -76,10 +79,12 @@ class Stest:
         with open(path, "w") as f:
             json.dump(self.config, f, indent=4)
 
+
     # @brief Checks if a file is being tracked by stest
     # @param file Path to the file
     def __file_is_tracked(self, file: str) -> bool:
         return file in self.config["tracked_files"]
+
 
     # @brief Checks if a file has changed
     # @param file Path to the file
@@ -94,6 +99,7 @@ class Stest:
 
         return False
 
+
     # @brief Checks if the content of a file matches the given language
     # @param file Path to the file
     # @param language Language to check
@@ -103,6 +109,7 @@ class Stest:
         file_content = utils.get_file_content(file)
         response = self.openai_iface.send_data_in_chunks_and_get_response(initial_prompt, file_content)
         return response[0] == "Yes"
+
 
     # @brief Sets a file as tracked
     #
@@ -121,6 +128,7 @@ class Stest:
             }
             self.__save_config_file(STEST_DIR + DIR_SEPARATOR + STEST_CONFIG_FILE)
 
+
     # @brief Tracks all files in a given directory
     def __track_all_files_in_directory(self, directory: str) -> None:
         for root, dirs, files in os.walk(directory):
@@ -129,6 +137,7 @@ class Stest:
                     self.__track_file(file)
                 except Exception as e:
                     print(e)
+
 
     ###############################
     # Public methods              #
@@ -146,6 +155,7 @@ class Stest:
         self.__load_config_file(config_file_path)
         print("Initialized empty stest environment.")
 
+
     # @brief Adds a list of files to the tracked files
     # @param paths List of paths to the files 
     def add(self, paths: list[str]) -> None:
@@ -159,13 +169,14 @@ class Stest:
                 raise Exception(f"No such file or directory: {path}")
             elif utils.is_dir(path):
                 pass
-
             elif self.__file_is_tracked(path):
-                raise Exception(
-                    f"The file {path} is already being tracked. Use 'stest remove' to stop tracking the file.")
+                raise Exception(f"The file {path} is already being tracked. Use 'stest remove' to stop tracking the file.")
             else:
                 self.__track_file(path)
 
+
+    # @brief Removes a list of files from the tracked files
+    # @param paths List of paths to the files
     def remove(self, paths: list[str]) -> None:
         if not self.__cwd_is_stest_environment():
             raise Exception("The current directory is not a stest environment.")
@@ -182,11 +193,15 @@ class Stest:
 
         self.__save_config_file(STEST_DIR + DIR_SEPARATOR + STEST_CONFIG_FILE)
 
+
+    # @brief Untracks a file
+    # @param file Path to the file
     def __untrack_file(self, file: str) -> None:
         if file in self.config["tracked_files"]:
             del self.config["tracked_files"][file]
         else:
             raise Exception(f"The file {file} is not being tracked.")
+
 
     # @brief Creates the tests for the tracked files
     def create_tests(self) -> None:
@@ -196,3 +211,5 @@ class Stest:
         for file in self.config["tracked_files"]:
             if self.__file_has_changed(file):
                 print("File has changed: {}".format(file))
+
+
