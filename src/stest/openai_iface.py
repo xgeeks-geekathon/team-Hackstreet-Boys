@@ -1,16 +1,21 @@
 import os
 from openai import OpenAI
+from dotenv import load_dotenv
 
 import tiktoken
 
 # Local imports
 from . import prompts
 
+# Load environment variables from .env file
+load_dotenv()
 
-MAX_TOKENS = 2500
-MODEL_TOKEN_LIMIT = 8192
-MODEL = "gpt-4"
-API_KEY = "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" # This is temp
+
+# Get the values from the environment variables or use default values
+MODEL = os.getenv("MODEL")
+API_KEY = os.getenv("API_KEY")
+MAX_TOKENS = int(os.getenv("MAX_TOKENS"))
+MODEL_TOKEN_LIMIT = int(os.getenv("MODEL_TOKEN_LIMIT"))
 
 client = OpenAI(api_key=API_KEY)
 
