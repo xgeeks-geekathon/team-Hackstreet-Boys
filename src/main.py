@@ -1,5 +1,6 @@
 import argparse
 from stest import stest
+from stest import utils
 import os
 
 def main():
@@ -23,7 +24,7 @@ def main():
     app = stest.Stest()
 
     if args.command == "init":
-            app.init(args.projectDir)
+        app.init(args.projectDir)
     elif args.command == "add":
         app.add(*args.files)
     elif args.command == "create-tests":
