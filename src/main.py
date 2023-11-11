@@ -10,10 +10,9 @@ async def main():
 
     # Subparser for init
     init_parser = subparsers.add_parser("init", help="Initialize something")
-    init_parser.add_argument("projectDir", nargs="?", default=os.getcwd(),
-                             help="Project directory")  # Accepts 0 or 1 arguments
-    init_parser.add_argument("-l", "--language", nargs="?", choices=["cpp", "js", "py", "c"],
-                             help="Programming language of the files")
+    init_parser.add_argument("projectDir", nargs="?", default=os.getcwd(),help="Project directory")
+    init_parser.add_argument("-o", "--outputDir", nargs="?", default= os.path.join(os.getcwd(), 'tests'), help="Tests destination folder")
+    init_parser.add_argument("-l", "--language", nargs="?", choices=["cpp", "js", "py", "c"], help="Programming language of the files")
 
     # Subparser for add
     add_parser = subparsers.add_parser("add", help="Add files")
@@ -32,7 +31,7 @@ async def main():
 
     try:
         if args.command == "init":
-            app.init(args.projectDir, args.language)
+            app.init(args.projectDir, args.outputDir, args.language)
         elif args.command == "add":
             await app.add(args.files)
         elif args.command == "remove":
