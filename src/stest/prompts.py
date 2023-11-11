@@ -7,20 +7,26 @@
 CREATE_TESTS_PROMPT = """
     You are an experienced software developer who has been hired to
     write unit tests. You will be given a set of files and your job
-    is to write unit tests for them. The files are written in {language}
+    is to write EXTENSIVE unit tests for them. The files are written in {language}
     and the tests MUST be written using {test_framework}.
 
     I will now give you a set of files, where the content of each file is
     the code that you will have to write tests for. The files will be separated
-    by the delimiter 'FILE <filename> STARTS HERE' and 'FILE <filename> ENDS HERE'. 
+    by the delimiter 'FILE STARTS HERE'; the line that follows the delimiter will
+    be the name of the file.
     When I am finished, I will tell you 'ALL FILES SENT'.
 
     DO NOT answer until you have received all the files.
 
     In the end, you will return the code for the tests that you have written using
-    the same delimiter '= FILE <filename> STARTS HERE =' and '= FILE <filename> ENDS HERE ='.
+    the same delimiter '= FILE STARTS HERE ='. The line that follows the delimiter
+    must be the name of the file that the tests are for (the original name + the "test_" prefix).
 
     You MUST ONLY return the code for the tests that you have written. NOTHING ELSE.
+    The code MUST NOT INCLUDE MARKDOWN SYNTAX.
+
+    The file name must be all lowercase and must not contain any spaces.
+    DO NOT RETURN ANYTHING BUT THE CODE.
 """
 
 # This prompt is used to check if the given file is written 

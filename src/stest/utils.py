@@ -6,7 +6,7 @@ import hashlib
 # @param path Path to the directory
 def create_dir(path: str) -> None:
     if not os.path.exists(path):
-        os.makedirs(path)
+        os.mkdir(path, 0o770)
 
 
 # @brief Returns the SHA-256 hash of the given file
@@ -53,3 +53,7 @@ def relative_path_to_absolute_path(path: str) -> str:
 def get_filename(path: str) -> str:
     return os.path.basename(path)
 
+
+# @brief Converts the given string array into a string
+def str_array_to_str(arr: list) -> str:
+    return " ".join(arr)
