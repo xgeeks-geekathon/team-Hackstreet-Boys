@@ -204,7 +204,7 @@ class Stest:
         for path in paths:
             if not os.path.exists(path):
                 raise Exception(f"No such file or directory: {path}")
-            elif utils.is_dir(path):
+            elif os.path.isdir(path):
                 pass
 
             elif self.__file_is_tracked(path):
