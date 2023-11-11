@@ -8,10 +8,11 @@ from . import prompts
 
 ########################################################################
 
-# List of supported testing frameworks
-# for each language
+# List of supported languages
 SUPPORTED_LANGUAGES = ["c", "cpp", "py", "js"]
 
+# List of supported testing frameworks
+# for each language
 TESTING_FRAMEWORKS = {
     "c": "criterion",
     "cpp": "criterion",
@@ -169,6 +170,8 @@ class Stest:
             else:
                 self.__track_file(path)
 
+    # @brief Removes a list of files from the tracked files
+    # @param paths List of paths to the files
     def remove(self, paths: list[str]) -> None:
         if not self.__cwd_is_stest_environment():
             raise Exception("The current directory is not a stest environment.")
@@ -188,12 +191,16 @@ class Stest:
 
         self.__save_config_file(STEST_DIR + DIR_SEPARATOR + STEST_CONFIG_FILE)
 
+    # @brief Removes a file from the tracked files
+    # @param file Path to the file
     def __untrack_file(self, file: str) -> None:
         if file in self.config["tracked_files"]:
             del self.config["tracked_files"][file]
         else:
             raise Exception(f"The file {file} is not being tracked.")
 
+    # @brief Removes all files in a given directory from the tracked files
+    # @param directory Path to the directory
     def __untrack_files_in_directory(self, directory: str) -> None:
         for root, dirs, files in os.walk(directory):
             for file in files:
