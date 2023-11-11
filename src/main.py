@@ -1,15 +1,19 @@
 import argparse
+import asyncio
 from stest import stest
 import os
 
-def main():
+
+async def main():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command", help="Sub-commands")
 
     # Subparser for init
     init_parser = subparsers.add_parser("init", help="Initialize something")
-    init_parser.add_argument("projectDir", nargs="?", default=os.getcwd(), help="Project directory") #Accepts 0 or 1 arguments
-    init_parser.add_argument("-l", "--language", nargs="?", choices=["cpp", "js", "py", "c"], help="Programming language of the files")
+    init_parser.add_argument("projectDir", nargs="?", default=os.getcwd(),
+                             help="Project directory")  # Accepts 0 or 1 arguments
+    init_parser.add_argument("-l", "--language", nargs="?", choices=["cpp", "js", "py", "c"],
+                             help="Programming language of the files")
 
     # Subparser for add
     add_parser = subparsers.add_parser("add", help="Add files")
@@ -40,4 +44,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
