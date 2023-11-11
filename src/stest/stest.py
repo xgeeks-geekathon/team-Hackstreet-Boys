@@ -10,6 +10,8 @@ from . import prompts
 
 # List of supported testing frameworks
 # for each language
+SUPPORTED_LANGUAGES = ["c", "cpp", "py", "js"]
+
 TESTING_FRAMEWORKS = {
     "c": "criterion",
     "cpp": "criterion",
@@ -102,7 +104,8 @@ class Stest:
         initial_prompt = prompts.CHECK_FILE_LANGUAGE_PROMPT.replace("{language}", language)
         file_content = utils.get_file_content(file)
         response = self.openai_iface.send_data_in_chunks_and_get_response(initial_prompt, file_content)
-        return response[0] == "Yes"
+        file_extension = file.split(".")[-1]
+        return response[0] == "Yes" and file_extension in SUPPORTED_LANGUAGES
 
     # @brief Sets a file as tracked
     #
@@ -126,6 +129,7 @@ class Stest:
         for root, dirs, files in os.walk(directory):
             for file in files:
                 try:
+                    file = os.path.join(root, file)
                     self.__track_file(file)
                 except Exception as e:
                     print(e)
@@ -158,8 +162,7 @@ class Stest:
             if not os.path.exists(path):
                 raise Exception(f"No such file or directory: {path}")
             elif utils.is_dir(path):
-                pass
-
+                self.__track_all_files_in_directory(path)
             elif self.__file_is_tracked(path):
                 raise Exception(
                     f"The file {path} is already being tracked. Use 'stest remove' to stop tracking the file.")
@@ -173,9 +176,12 @@ class Stest:
         self.__load_config_file(STEST_DIR + DIR_SEPARATOR + STEST_CONFIG_FILE)
 
         for path in paths:
+
             if not os.path.exists(path):
                 raise Exception(f"No such file or directory: {path}")
-            elif not self.__file_is_tracked(path):
+            elif os.path.exists(path):
+                self.__untrack_files_in_directory(path)
+            elif not self.__file_is_tracked(path) and not utils.is_dir(path):
                 raise Exception(f"The file {path} is not being tracked.")
             else:
                 self.__untrack_file(path)
@@ -187,6 +193,13 @@ class Stest:
             del self.config["tracked_files"][file]
         else:
             raise Exception(f"The file {file} is not being tracked.")
+
+    def __untrack_files_in_directory(self, directory: str) -> None:
+        for root, dirs, files in os.walk(directory):
+            for file in files:
+                full_path = os.path.join(root, file)
+                if self.__file_is_tracked(full_path):
+                    self.__untrack_file(full_path)
 
     # @brief Creates the tests for the tracked files
     def create_tests(self) -> None:
