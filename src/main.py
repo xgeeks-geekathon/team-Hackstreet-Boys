@@ -17,6 +17,7 @@ async def main():
     # Subparser for add
     add_parser = subparsers.add_parser("add", help="Add files")
     add_parser.add_argument("files", nargs="+", help="Files to add")
+    
 
     # Subparser for remove
     remove_parser = subparsers.add_parser("remove", help="Remove files")

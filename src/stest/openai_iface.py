@@ -1,3 +1,7 @@
+import os
+from openai import OpenAI
+from dotenv import load_dotenv
+
 import httpx
 import tiktoken
 from tiktoken import encoding_for_model
@@ -5,10 +9,16 @@ from tiktoken import encoding_for_model
 # Local imports
 from . import prompts
 
-MAX_TOKENS = 2500
-MODEL_TOKEN_LIMIT = 8192
-MODEL = "gpt-4"
-API_KEY = "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"  # This is temp
+# Load environment variables from .env file
+load_dotenv()
+
+
+# Get the values from the environment variables or use default values
+MODEL = os.getenv("MODEL")
+API_KEY = os.getenv("API_KEY")
+MAX_TOKENS = int(os.getenv("MAX_TOKENS"))
+MODEL_TOKEN_LIMIT = int(os.getenv("MODEL_TOKEN_LIMIT"))
+
 
 # Async HTTP client
 async_client = httpx.AsyncClient()

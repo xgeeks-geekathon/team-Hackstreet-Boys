@@ -44,6 +44,7 @@ class Stest:
     def __init__(self):
         self.config = None
         self.openai_iface = IOpenAI()
+        
 
     ###############################
     # Private methods             #
@@ -52,11 +53,21 @@ class Stest:
     # @brief Checks if a given directory is a stest environment
     # @return True if the directory is a stest environment, False otherwise
     def __cwd_is_stest_environment(self) -> bool:
+
+        #debuging
+        stest_dir_path = os.path.abspath(STEST_DIR)
+        config_file_path = os.path.join(stest_dir_path, STEST_CONFIG_FILE)
+
+        print(f"STEST_DIR: {stest_dir_path}")
+        print(f"Config File Path: {config_file_path}")
+
         if not os.path.exists(STEST_DIR):
             return False
 
         if not os.path.isfile(STEST_DIR + DIR_SEPARATOR + STEST_CONFIG_FILE):
             return False
+        
+        print("Directory is recognized as a stest environment.")
 
         return True
 
@@ -136,6 +147,8 @@ class Stest:
                     await self.__track_file(file)
                 except Exception as e:
                     print(e)
+    stest_dir_path = os.path.abspath(STEST_DIR)
+    config_file_path = os.path.join(stest_dir_path, STEST_CONFIG_FILE)
 
     ###############################
     # Public methods              #
