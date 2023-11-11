@@ -37,7 +37,7 @@ def main():
         elif args.command == "create-tests":
             app.create_tests()
     except Exception as e:
-        print(e.__cause__)
+        print(e)
 
 
 if __name__ == "__main__":
