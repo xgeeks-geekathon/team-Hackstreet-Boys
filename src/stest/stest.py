@@ -8,6 +8,9 @@ from . import prompts
 
 ########################################################################
 
+# List of supported languages
+SUPPORTED_LANGUAGES = ["c", "cpp", "py", "js"]
+
 # List of supported testing frameworks
 # for each language
 TESTING_FRAMEWORKS = {
@@ -23,6 +26,7 @@ DEFAULT_CONFIG = {
     "language": "",
     "test_framework": "",
     "test_command": "",
+    "output_dir": "",
 }
 
 # Dir name for stest environments
@@ -45,6 +49,7 @@ class Stest:
     def __init__(self):
         self.config = None
         self.openai_iface = IOpenAI()
+        
 
     ###############################
     # Private methods             #
@@ -53,20 +58,31 @@ class Stest:
     # @brief Checks if a given directory is a stest environment
     # @return True if the directory is a stest environment, False otherwise
     def __cwd_is_stest_environment(self) -> bool:
+
+        #debuging
+        stest_dir_path = os.path.abspath(STEST_DIR)
+        config_file_path = os.path.join(stest_dir_path, STEST_CONFIG_FILE)
+
+        print(f"STEST_DIR: {stest_dir_path}")
+        print(f"Config File Path: {config_file_path}")
+
         if not os.path.exists(STEST_DIR):
             return False
 
         if not os.path.isfile(STEST_DIR + DIR_SEPARATOR + STEST_CONFIG_FILE):
             return False
+        
+        print("Directory is recognized as a stest environment.")
 
         return True
 
 
     # @brief Creates the default config file
     # @param path Path to the config file
-    def __create_config_file(self, path: str, language: str) -> None:
+    def __create_config_file(self, path: str, test_dir: str, language: str) -> None:
         DEFAULT_CONFIG["language"] = language
         DEFAULT_CONFIG["test_framework"] = TESTING_FRAMEWORKS[language]
+        DEFAULT_CONFIG["test_dir"] = test_dir
         with open(path, "w") as f:
             json.dump(DEFAULT_CONFIG, f, indent=4)
 
@@ -106,11 +122,12 @@ class Stest:
     # @param file Path to the file
     # @param language Language to check
     # @return True if the content of the file matches the language, False otherwise
-    def __file_content_matches_language(self, file: str, language: str) -> bool:
+    async def __file_content_matches_language(self, file: str, language: str) -> bool:
         initial_prompt = prompts.CHECK_FILE_LANGUAGE_PROMPT.replace("{language}", language)
-        file_content = utils.get_file_content(file)
-        response = self.openai_iface.send_data_in_chunks_and_get_response(initial_prompt, file_content)
-        return response[0] == "Yes"
+        file_content = utils.get_file_content(file)  # Assuming this is a synchronous function
+        response = await self.openai_iface.send_data_in_chunks_and_get_response(initial_prompt, file_content)
+        file_extension = file.split(".")[-1]
+        return "Yes" in response and file_extension in SUPPORTED_LANGUAGES
 
 
     # @brief Sets a file as tracked
@@ -120,9 +137,9 @@ class Stest:
     #          with the file hash to check for changes
     #
     # @param file Path to the file
-    def __track_file(self, file: str) -> None:
+    async def __track_file(self, file: str) -> None:
         if not self.__file_is_tracked(file):
-            if not self.__file_content_matches_language(file, self.config["language"]):
+            if not await self.__file_content_matches_language(file, self.config["language"]):
                 raise Exception(f"File {file} does not match the current language defined for the test environment: {self.config['language']} so it's being ignored")
 
             self.config["tracked_files"][file] = {
@@ -142,13 +159,16 @@ class Stest:
 
 
     # @brief Tracks all files in a given directory
-    def __track_all_files_in_directory(self, directory: str) -> None:
+    async def __track_all_files_in_directory(self, directory: str) -> None:
         for root, dirs, files in os.walk(directory):
             for file in files:
                 try:
-                    self.__track_file(file)
+                    file = os.path.join(root, file)
+                    await self.__track_file(file)
                 except Exception as e:
                     print(e)
+    stest_dir_path = os.path.abspath(STEST_DIR)
+    config_file_path = os.path.join(stest_dir_path, STEST_CONFIG_FILE)
 
 
     # @brief Builds the serialized data for a file
@@ -187,20 +207,20 @@ class Stest:
 
     # @brief Initializes a new stest environment
     # @param path Path to the stest environment
-    def init(self, path: str, language: str) -> None:
+    def init(self, path: str, test_dir: str, language: str) -> None:
         if self.__cwd_is_stest_environment():
             raise Exception("The current directory already contains a stest environment.")
 
         utils.create_dir(path + DIR_SEPARATOR + STEST_DIR)
         config_file_path = path + DIR_SEPARATOR + CONFIG_FILE_PATH
-        self.__create_config_file(config_file_path, language)
+        self.__create_config_file(config_file_path, language, test_dir)
         self.__load_config_file(config_file_path)
         print("Initialized empty stest environment.")
 
 
     # @brief Adds a list of files to the tracked files
     # @param paths List of paths to the files 
-    def add(self, paths: list[str]) -> None:
+    async def add(self, paths: list[str]) -> None:
         if not self.__cwd_is_stest_environment():
             raise Exception("The current directory is not a stest environment.")
 
@@ -210,15 +230,15 @@ class Stest:
             if not os.path.exists(path):
                 raise Exception(f"No such file or directory: {path}")
             elif utils.is_dir(path):
-                pass
+                await self.__track_all_files_in_directory(path)
             elif self.__file_is_tracked(path):
                 raise Exception(f"The file {path} is already being tracked. Use 'stest remove' to stop tracking the file.")
             else:
-                self.__track_file(path)
+                await self.__track_file(path)
 
         # We dont need to save config here bc __track_file does it for us
 
-
+        
     # @brief Removes a list of files from the tracked files
     # @param paths List of paths to the files
     def remove(self, paths: list[str]) -> None:
@@ -228,15 +248,36 @@ class Stest:
         self.__load_config_file(CONFIG_FILE_PATH)
 
         for path in paths:
+
             if not os.path.exists(path):
                 raise Exception(f"No such file or directory: {path}")
-            elif not self.__file_is_tracked(path):
+            elif os.path.exists(path):
+                self.__untrack_files_in_directory(path)
+            elif not self.__file_is_tracked(path) and not utils.is_dir(path):
                 raise Exception(f"The file {path} is not being tracked.")
             else:
                 self.__untrack_file(path)
 
         self.__save_config_file(CONFIG_FILE_PATH)
 
+
+    # @brief Removes a file from the tracked files
+    # @param file Path to the file
+    def __untrack_file(self, file: str) -> None:
+        if file in self.config["tracked_files"]:
+            del self.config["tracked_files"][file]
+        else:
+            raise Exception(f"The file {file} is not being tracked.")
+            
+
+    # @brief Removes all files in a given directory from the tracked files
+    # @param directory Path to the directory
+    def __untrack_files_in_directory(self, directory: str) -> None:
+        for root, dirs, files in os.walk(directory):
+            for file in files:
+                full_path = os.path.join(root, file)
+                if self.__file_is_tracked(full_path):
+                    self.__untrack_file(full_path)
 
     # @brief Creates the tests for the tracked files
     def create_tests(self) -> None:
