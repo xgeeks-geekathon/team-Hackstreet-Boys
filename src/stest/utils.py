@@ -32,6 +32,13 @@ def is_posix():
     return os.name == "posix"
 
 
+# @brief Checks if the given path is a directory
+# @param path Path to the directory
+# @return True if the path is a directory, False otherwise
+def is_dir(path: str) -> bool:
+    return os.path.isdir(path)
+
+
 # @brief Converts the given relative path into an absolute path
 # @param path Relative path
 # @return absolute_path
