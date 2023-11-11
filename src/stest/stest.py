@@ -101,12 +101,12 @@ class Stest:
     # @param file Path to the file
     # @param language Language to check
     # @return True if the content of the file matches the language, False otherwise
-    def __file_content_matches_language(self, file: str, language: str) -> bool:
+    async def __file_content_matches_language(self, file: str, language: str) -> bool:
         initial_prompt = prompts.CHECK_FILE_LANGUAGE_PROMPT.replace("{language}", language)
-        file_content = utils.get_file_content(file)
-        response = self.openai_iface.send_data_in_chunks_and_get_response(initial_prompt, file_content)
+        file_content = utils.get_file_content(file)  # Assuming this is a synchronous function
+        response = await self.openai_iface.send_data_in_chunks_and_get_response(initial_prompt, file_content)
         file_extension = file.split(".")[-1]
-        return response[0] == "Yes" and file_extension in SUPPORTED_LANGUAGES
+        return "Yes" in response and file_extension in SUPPORTED_LANGUAGES
 
     # @brief Sets a file as tracked
     #
