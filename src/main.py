@@ -37,8 +37,6 @@ def main():
             app.create_tests()
     except Exception as e:
         print(e.__cause__)
-        # Print stack trace
-        raise e
 
 
 if __name__ == "__main__":
