@@ -126,9 +126,9 @@ class Stest:
     #          with the file hash to check for changes
     #
     # @param file Path to the file
-    def __track_file(self, file: str) -> None:
+    async def __track_file(self, file: str) -> None:
         if not self.__file_is_tracked(file):
-            if not self.__file_content_matches_language(file, self.config["language"]):
+            if not await self.__file_content_matches_language(file, self.config["language"]):
                 raise Exception(f"File {file} does not match the current language defined for the test environment: {self.config['language']} so it's being ignored")
 
             self.config["tracked_files"][file] = {
@@ -137,12 +137,12 @@ class Stest:
             self.__save_config_file(STEST_DIR + DIR_SEPARATOR + STEST_CONFIG_FILE)
 
     # @brief Tracks all files in a given directory
-    def __track_all_files_in_directory(self, directory: str) -> None:
+    async def __track_all_files_in_directory(self, directory: str) -> None:
         for root, dirs, files in os.walk(directory):
             for file in files:
                 try:
                     file = os.path.join(root, file)
-                    self.__track_file(file)
+                    await self.__track_file(file)
                 except Exception as e:
                     print(e)
     stest_dir_path = os.path.abspath(STEST_DIR)
@@ -166,7 +166,7 @@ class Stest:
 
     # @brief Adds a list of files to the tracked files
     # @param paths List of paths to the files 
-    def add(self, paths: list[str]) -> None:
+    async def add(self, paths: list[str]) -> None:
         if not self.__cwd_is_stest_environment():
             raise Exception("The current directory is not a stest environment.")
 
@@ -176,12 +176,12 @@ class Stest:
             if not os.path.exists(path):
                 raise Exception(f"No such file or directory: {path}")
             elif utils.is_dir(path):
-                self.__track_all_files_in_directory(path)
+                await self.__track_all_files_in_directory(path)
             elif self.__file_is_tracked(path):
                 raise Exception(
                     f"The file {path} is already being tracked. Use 'stest remove' to stop tracking the file.")
             else:
-                self.__track_file(path)
+                await self.__track_file(path)
 
     # @brief Removes a list of files from the tracked files
     # @param paths List of paths to the files

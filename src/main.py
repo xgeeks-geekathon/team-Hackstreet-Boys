@@ -35,7 +35,7 @@ async def main():
         if args.command == "init":
             app.init(args.projectDir, args.language)
         elif args.command == "add":
-            app.add(args.files)
+            await app.add(args.files)
         elif args.command == "remove":
             app.remove(args.files)
         elif args.command == "create-tests":
