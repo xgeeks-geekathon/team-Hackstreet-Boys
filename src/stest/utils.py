@@ -16,7 +16,7 @@ def get_file_hash(file: str) -> str:
         bytes = f.read()
         digest = hashlib.sha256(bytes).hexdigest()
         return digest
-
+      
 
 # @brief Returns the content of the given file
 # @param file Path to the file
@@ -37,6 +37,4 @@ def is_posix():
 # @return absolute_path
 def relative_path_to_absolute_path(path: str) -> str:
     return os.path.abspath(path)
-
-
 
