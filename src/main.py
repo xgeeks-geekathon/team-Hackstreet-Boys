@@ -1,7 +1,7 @@
 import argparse
 
 from stest import stest
-
+from stest import utils
 
 def main():
     parser = argparse.ArgumentParser()
@@ -11,7 +11,7 @@ def main():
     app = stest.Stest()
 
     if args.command == "init":
-        app.init(".")
+        app.init(utils.relative_path_to_absolute_path("./"))
 
 if __name__ == "__main__":
     main()

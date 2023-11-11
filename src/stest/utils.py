@@ -30,3 +30,13 @@ def get_file_content(file: str) -> str:
 # @return True if the OS is POSIX, False otherwise
 def is_posix():
     return os.name == "posix"
+
+
+# @brief Converts the given relative path into an absolute path
+# @param path Relative path
+# @return absolute_path
+def relative_path_to_absolute_path(path: str) -> str:
+    return os.path.abspath(path)
+
+
+

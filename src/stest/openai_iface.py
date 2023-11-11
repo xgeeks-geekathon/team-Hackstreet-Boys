@@ -127,4 +127,3 @@ class IOpenAI:
         ):
             self.messages.pop(1)
 
-
