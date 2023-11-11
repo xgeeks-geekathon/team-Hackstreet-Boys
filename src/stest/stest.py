@@ -37,6 +37,11 @@ DIR_SEPARATOR = "\\"
 if utils.is_posix():
     DIR_SEPARATOR = "/"
 
+CONFIG_FILE_PATH = STEST_DIR + DIR_SEPARATOR + STEST_CONFIG_FILE
+
+FILE_START_DELIMITER = "= FILE {filename} STARTS HERE ="
+FILE_END_DELIMITER = "= FILE {filename} ENDS HERE ="
+
 
 ########################################################################
 
@@ -71,14 +76,16 @@ class Stest:
 
         return True
 
+
     # @brief Creates the default config file
     # @param path Path to the config file
-    def __create_config_file(self, inPath: str, outPath: str,language: str) -> None:
+    def __create_config_file(self, path: str, test_dir: str, language: str) -> None:
         DEFAULT_CONFIG["language"] = language
         DEFAULT_CONFIG["test_framework"] = TESTING_FRAMEWORKS[language]
-        DEFAULT_CONFIG["output_dir"] = outPath
-        with open(inPath, "w") as f:
+        DEFAULT_CONFIG["test_dir"] = test_dir
+        with open(path, "w") as f:
             json.dump(DEFAULT_CONFIG, f, indent=4)
+
 
     # @brief Loads the config file
     # @param path Path to the config file
@@ -86,16 +93,19 @@ class Stest:
         with open(path, "r") as f:
             self.config = json.load(f)
 
+
     # @brief Saves the config file
     # @param path Path to the config file
     def __save_config_file(self, path: str) -> None:
         with open(path, "w") as f:
             json.dump(self.config, f, indent=4)
 
+
     # @brief Checks if a file is being tracked by stest
     # @param file Path to the file
     def __file_is_tracked(self, file: str) -> bool:
         return file in self.config["tracked_files"]
+
 
     # @brief Checks if a file has changed
     # @param file Path to the file
@@ -105,10 +115,8 @@ class Stest:
             return False
 
         file_hash = utils.get_file_hash(file)
-        if file_hash != self.config["tracked_files"][file]["hash"]:
-            return True
+        return file_hash != self.config["tracked_files"][file]["hash"]
 
-        return False
 
     # @brief Checks if the content of a file matches the given language
     # @param file Path to the file
@@ -120,6 +128,7 @@ class Stest:
         response = await self.openai_iface.send_data_in_chunks_and_get_response(initial_prompt, file_content)
         file_extension = file.split(".")[-1]
         return "Yes" in response and file_extension in SUPPORTED_LANGUAGES
+
 
     # @brief Sets a file as tracked
     #
@@ -134,9 +143,20 @@ class Stest:
                 raise Exception(f"File {file} does not match the current language defined for the test environment: {self.config['language']} so it's being ignored")
 
             self.config["tracked_files"][file] = {
-                "hash": utils.get_file_hash(file),
+                "hash": ""
             }
-            self.__save_config_file(STEST_DIR + DIR_SEPARATOR + STEST_CONFIG_FILE)
+
+            self.__save_config_file(CONFIG_FILE_PATH)
+
+    
+    # @brief Untracks a file
+    # @param file Path to the file
+    def __untrack_file(self, file: str) -> None:
+        if file in self.config["tracked_files"]:
+            del self.config["tracked_files"][file]
+        else:
+            raise Exception(f"The file {file} is not being tracked.")
+
 
     # @brief Tracks all files in a given directory
     async def __track_all_files_in_directory(self, directory: str) -> None:
@@ -150,21 +170,53 @@ class Stest:
     stest_dir_path = os.path.abspath(STEST_DIR)
     config_file_path = os.path.join(stest_dir_path, STEST_CONFIG_FILE)
 
+
+    # @brief Builds the serialized data for a file
+    #
+    # @details The serialized data for a file is the file content
+    #          formatted in a way that Chat GPT can understand and parse.
+    #          (check prompts.py/CREATE_TESTS_PROMPT for details)
+    #
+    # @param path Path to the file
+    # @return Serialized data for the file
+    def __build_serialized_file_data(self, path: str) -> str:
+        file_content = utils.get_file_content(path)
+        return FILE_START_DELIMITER.replace(
+            "{filename}", utils.get_filename(path)) + "\n" + file_content + "\n" + FILE_END_DELIMITER.replace("{filename}", utils.get_filename(path)
+        )
+
+
+    # @brief Saves the returned tests from Chat GPT into a file 
+    #
+    # @details The returned tests from Chat GPT are a list of strings
+    #          that represent the tests that were generated for a given file.
+    #          
+    #          The output is formatted in the same way as the serialized data
+    #          that was sent to Chat GPT. (check prompts.py/CREATE_TESTS_PROMPT for details)
+    #
+    # @param path Path to the file
+    # @param data Data to save
+    def __save_serialized_test_data(self, path: str, data: str) -> None:
+        pass
+
+
+
     ###############################
     # Public methods              #
     ###############################
 
     # @brief Initializes a new stest environment
     # @param path Path to the stest environment
-    def init(self, inPath: str, outPath: str,language: str) -> None:
+    def init(self, path: str, test_dir: str, language: str) -> None:
         if self.__cwd_is_stest_environment():
             raise Exception("The current directory already contains a stest environment.")
 
-        utils.create_dir(inPath + DIR_SEPARATOR + STEST_DIR)
-        config_file_path = inPath + DIR_SEPARATOR + STEST_DIR + DIR_SEPARATOR + STEST_CONFIG_FILE
-        self.__create_config_file(config_file_path, outPath, language)
+        utils.create_dir(path + DIR_SEPARATOR + STEST_DIR)
+        config_file_path = path + DIR_SEPARATOR + CONFIG_FILE_PATH
+        self.__create_config_file(config_file_path, language, test_dir)
         self.__load_config_file(config_file_path)
         print("Initialized empty stest environment.")
+
 
     # @brief Adds a list of files to the tracked files
     # @param paths List of paths to the files 
@@ -172,7 +224,7 @@ class Stest:
         if not self.__cwd_is_stest_environment():
             raise Exception("The current directory is not a stest environment.")
 
-        self.__load_config_file(STEST_DIR + DIR_SEPARATOR + STEST_CONFIG_FILE)
+        self.__load_config_file(CONFIG_FILE_PATH)
 
         for path in paths:
             if not os.path.exists(path):
@@ -180,18 +232,20 @@ class Stest:
             elif utils.is_dir(path):
                 await self.__track_all_files_in_directory(path)
             elif self.__file_is_tracked(path):
-                raise Exception(
-                    f"The file {path} is already being tracked. Use 'stest remove' to stop tracking the file.")
+                raise Exception(f"The file {path} is already being tracked. Use 'stest remove' to stop tracking the file.")
             else:
                 await self.__track_file(path)
 
+        # We dont need to save config here bc __track_file does it for us
+
+        
     # @brief Removes a list of files from the tracked files
     # @param paths List of paths to the files
     def remove(self, paths: list[str]) -> None:
         if not self.__cwd_is_stest_environment():
             raise Exception("The current directory is not a stest environment.")
 
-        self.__load_config_file(STEST_DIR + DIR_SEPARATOR + STEST_CONFIG_FILE)
+        self.__load_config_file(CONFIG_FILE_PATH)
 
         for path in paths:
 
@@ -204,7 +258,8 @@ class Stest:
             else:
                 self.__untrack_file(path)
 
-        self.__save_config_file(STEST_DIR + DIR_SEPARATOR + STEST_CONFIG_FILE)
+        self.__save_config_file(CONFIG_FILE_PATH)
+
 
     # @brief Removes a file from the tracked files
     # @param file Path to the file
@@ -213,6 +268,7 @@ class Stest:
             del self.config["tracked_files"][file]
         else:
             raise Exception(f"The file {file} is not being tracked.")
+            
 
     # @brief Removes all files in a given directory from the tracked files
     # @param directory Path to the directory
@@ -228,6 +284,31 @@ class Stest:
         if not self.__cwd_is_stest_environment():
             raise Exception("The current directory is not a stest environment.")
 
+        self.__load_config_file(CONFIG_FILE_PATH)
+        files_to_test = []
+
         for file in self.config["tracked_files"]:
-            if self.__file_has_changed(file):
-                print("File has changed: {}".format(file))
+            #if self.__file_has_changed(file):
+            files_to_test.append(file)
+
+        if len(files_to_test) == 0:
+            print("No modifications since last test generation were found, aborting.")
+            return
+
+        print(f"Generating tests for {len(files_to_test)} files. This may take a while.")
+        
+        data_to_send = ""
+        for file in files_to_test:
+            self.config["tracked_files"][file]["hash"] = utils.get_file_hash(file)
+            data_to_send += self.__build_serialized_file_data(file)
+
+        response = self.openai_iface.send_data_in_chunks_and_get_response(
+            prompts.CREATE_TESTS_PROMPT, data_to_send
+        )
+
+        print(response)
+
+        self.__save_config_file(CONFIG_FILE_PATH)
+
+
+

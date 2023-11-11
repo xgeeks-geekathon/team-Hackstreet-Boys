@@ -45,3 +45,11 @@ def is_dir(path: str) -> bool:
 # @return absolute_path
 def relative_path_to_absolute_path(path: str) -> str:
     return os.path.abspath(path)
+
+
+# @brief Returns the filename from the given path
+# @param path Path to the file
+# @return filename
+def get_filename(path: str) -> str:
+    return os.path.basename(path)
+
