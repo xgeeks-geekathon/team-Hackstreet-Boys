@@ -67,8 +67,9 @@ class Stest:
      
     # @brief Creates the default config file
     # @param path Path to the config file
-    def __create_config_file(self, path: str) -> None:
-        print(path)
+    def __create_config_file(self, path: str, language: str) -> None:
+        DEFAULT_CONFIG["language"] = language
+        DEFAULT_CONFIG["test_framework"] = TESTING_FRAMEWORKS[language]
         with open(path, "w") as f:
             json.dump(DEFAULT_CONFIG, f, indent=4)
 
@@ -111,7 +112,8 @@ class Stest:
     # @param language Language to check
     # @return True if the language is supported, False otherwise
     def __language_is_supported(self, language: str) -> bool:
-        return language in SUPPORTED_LANGUAGES
+        lower_language = language.lower().strip()
+        return lower_language in SUPPORTED_LANGUAGES
 
 
     # @brief Checks if the content of a file matches the given language
@@ -134,13 +136,13 @@ class Stest:
     # @param file Path to the file
     def __track_file(self, file: str) -> None:
         if not self.__file_is_tracked(file):
-            if not __file_content_matches_language(file, self.config["language"]):
+            if not self.__file_content_matches_language(file, self.config["language"]):
                 raise Exception(f"File {file} does not match the current language: {self.config['language']} so it's being ignored")
 
             self.config["tracked_files"][file] = {
                 "hash": utils.get_file_hash(file),
             }
-            #self.__save_config_file
+            self.__save_config_file(STEST_DIR + DIR_SEPARATOR + STEST_CONFIG_FILE)
 
 
     # @brief Tracks all files in a given directory
@@ -159,32 +161,41 @@ class Stest:
 
     # @brief Initializes a new stest environment
     # @param path Path to the stest environment
-    def init(self, path: str) -> None:
+    def init(self, path: str, language: str) -> None:
         if self.__cwd_is_stest_environment():
             raise Exception("The current directory already contains a stest environment.")
 
+        if not self.__language_is_supported(language):
+            message = f"Language {language} is not supported. Supported languages are: "
+            for lang in SUPPORTED_LANGUAGES:
+                message += "[" + lang + "]"
+            raise Exception(message)
+
         utils.create_dir(path + DIR_SEPARATOR + STEST_DIR)
         config_file_path = path + DIR_SEPARATOR + STEST_DIR + DIR_SEPARATOR + STEST_CONFIG_FILE
-        self.__create_config_file(config_file_path)
+        self.__create_config_file(config_file_path, language)
         self.__load_config_file(config_file_path)
         print("Initialized empty stest environment.")
 
 
-    # @brief Adds a file to the tracked files
-    # @param file Path to the file
-    def add(self, path: str) -> None:
+    # @brief Adds a list of files to the tracked files
+    # @param paths List of paths to the files 
+    def add(self, paths: list[str]) -> None:
         if not self.__cwd_is_stest_environment():
             raise Exception("The current directory is not a stest environment.")
 
-        if not os.path.exists(path):
-            raise Exception(f"No such file or directory: {path}")
+        self.__load_config_file(STEST_DIR + DIR_SEPARATOR + STEST_CONFIG_FILE)
 
-        if self.__file_is_tracked(path):
-            raise Exception(f"The file {path} is already being tracked. Use 'stest remove' to stop tracking the file.")
+        for path in paths:
+            if not os.path.exists(path):
+                raise Exception(f"No such file or directory: {path}")
+            elif utils.is_dir(path):
+                pass
 
-        if not os.path.isfile(path):
-            # add all files in the directory
-            pass
+            elif self.__file_is_tracked(path):
+                raise Exception(f"The file {path} is already being tracked. Use 'stest remove' to stop tracking the file.")
+            else:
+                self.__track_file(path)
 
 
     # @brief Creates the tests for the tracked files

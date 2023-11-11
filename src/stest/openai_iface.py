@@ -1,12 +1,18 @@
 import os
-import openai
+from openai import OpenAI
+
 import tiktoken
+
+# Local imports
+from . import prompts
 
 
 MAX_TOKENS = 2500
 MODEL_TOKEN_LIMIT = 8192
 MODEL = "gpt-4"
 API_KEY = "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" # This is temp
+
+client = OpenAI(api_key=API_KEY)
 
 
 # @brief Interface to the OpenAI API
@@ -18,18 +24,10 @@ API_KEY = "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" # This is temp
 class IOpenAI:
     def __init__(
         self, 
-        api_key: str = None, 
         model: str = MODEL, 
         max_tokens: int = MAX_TOKENS, 
         model_token_limit: int = MODEL_TOKEN_LIMIT
     ):
-        if api_key is None:
-            api_key = API_KEY
-            if not api_key:
-                raise ValueError("OPENAI_API_KEY must be set")
-        else:
-            openai.api_key = api_key
-
         self.model = model
         self.max_tokens = max_tokens
         self.model_token_limit = model_token_limit
@@ -53,7 +51,7 @@ class IOpenAI:
             raise ValueError("prompt must be set")
 
         self.messages.append(prompt)
-        response = openai.Completion.create(model=model, messages=self.messages)
+        response = client.completions.create(model=self.model, messages=self.messages)
         chatgpt_response = response.choices[0].message["content"].strip()
         self.responses.append(chatgpt_response)
 
@@ -81,19 +79,20 @@ class IOpenAI:
         if not data_to_send:
             raise ValueError("data_to_send must be set")
 
+        tokenizer = tiktoken.encoding_for_model(self.model)
         chunk_size = self.max_tokens - len(tokenizer.encode(initial_prompt))
         chunks = self.__split_data_into_chunks(data_to_send, chunk_size)
 
         self.messages = [
             {"role": "user", "content": initial_prompt},
-            {"role": "user", "content": SEND_FILE_PROMPT},
+            {"role": "user", "content": prompts.SEND_FILE_PROMPT},
         ]
 
         for chunk in chunks:
             self.messages.append({"role": "user", "content": chunk})
-            self.__remove_oldest_chunk_if_token_limit_exceeded()
+            self.__remove_oldest_chunk_if_token_limit_exceeded(tokenizer, self.model_token_limit)
 
-        self.send_and_get_response(ALL_PARTS_SENT_PROMPT)
+        self.send_and_get_response(prompts.ALL_PARTS_SENT_PROMPT)
 
     ###############################
     # Private methods             #
@@ -120,7 +119,7 @@ class IOpenAI:
 
 
     # @brief Removes the oldest chunk from the messages if the token limit is exceeded.
-    def __remove_oldest_chunk_if_token_limit_exceeded(self) -> None:
+    def __remove_oldest_chunk_if_token_limit_exceeded(self, tokenizer, model_token_limit) -> None:
         while (
             sum(len(tokenizer.encode(message["content"])) for message in self.messages)
             > model_token_limit
