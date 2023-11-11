@@ -26,6 +26,7 @@ DEFAULT_CONFIG = {
     "language": "",
     "test_framework": "",
     "test_command": "",
+    "output_dir": "",
 }
 
 # Dir name for stest environments
@@ -72,10 +73,11 @@ class Stest:
 
     # @brief Creates the default config file
     # @param path Path to the config file
-    def __create_config_file(self, path: str, language: str) -> None:
+    def __create_config_file(self, inPath: str, outPath: str,language: str) -> None:
         DEFAULT_CONFIG["language"] = language
         DEFAULT_CONFIG["test_framework"] = TESTING_FRAMEWORKS[language]
-        with open(path, "w") as f:
+        DEFAULT_CONFIG["output_dir"] = outPath
+        with open(inPath, "w") as f:
             json.dump(DEFAULT_CONFIG, f, indent=4)
 
     # @brief Loads the config file
@@ -154,13 +156,13 @@ class Stest:
 
     # @brief Initializes a new stest environment
     # @param path Path to the stest environment
-    def init(self, path: str, language: str) -> None:
+    def init(self, inPath: str, outPath: str,language: str) -> None:
         if self.__cwd_is_stest_environment():
             raise Exception("The current directory already contains a stest environment.")
 
-        utils.create_dir(path + DIR_SEPARATOR + STEST_DIR)
-        config_file_path = path + DIR_SEPARATOR + STEST_DIR + DIR_SEPARATOR + STEST_CONFIG_FILE
-        self.__create_config_file(config_file_path, language)
+        utils.create_dir(inPath + DIR_SEPARATOR + STEST_DIR)
+        config_file_path = inPath + DIR_SEPARATOR + STEST_DIR + DIR_SEPARATOR + STEST_CONFIG_FILE
+        self.__create_config_file(config_file_path, outPath, language)
         self.__load_config_file(config_file_path)
         print("Initialized empty stest environment.")
 
