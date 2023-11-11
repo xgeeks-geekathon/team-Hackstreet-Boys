@@ -10,11 +10,11 @@ def main():
     # Subparser for init
     init_parser = subparsers.add_parser("init", help="Initialize something")
     init_parser.add_argument("projectDir", nargs="?", default=os.getcwd(), help="Project directory") #Accepts 0 or 1 arguments
+    init_parser.add_argument("-l", "--language", nargs=1, help="The programming language", required=True)
 
     # Subparser for add
     add_parser = subparsers.add_parser("add", help="Add files")
     add_parser.add_argument("files", nargs="+", help="Files to add")
-    add_parser.add_argument("-l", "--language", nargs="*", help="Language of the files")
 
     # Subparser for create-tests
     subparsers.add_parser("create-tests", help="Create tests")
@@ -23,12 +23,18 @@ def main():
 
     app = stest.Stest()
 
-    if args.command == "init":
-        app.init(args.projectDir)
-    elif args.command == "add":
-        app.add(*args.files)
-    elif args.command == "create-tests":
-        app.create_tests()
+    try:
+        if args.command == "init":
+            app.init(args.projectDir, args.language[0])
+        elif args.command == "add":
+            app.add(args.files)
+        elif args.command == "create-tests":
+            app.create_tests()
+    except Exception as e:
+        print(e)
+        # Print stack trace
+        raise e
+
 
 if __name__ == "__main__":
     main()
