@@ -47,6 +47,7 @@ class Stest:
     def __init__(self):
         self.config = None
         self.openai_iface = IOpenAI()
+        self.project_files = {}
 
     ###############################
     # Private methods             #
@@ -194,6 +195,20 @@ class Stest:
         for file in self.config["tracked_files"]:
             if self.__file_has_changed(file):
                 print("File has changed: {}".format(file))
+
+    def add(self, files, language=None):
+        """
+        Add files to the Stest project.
+
+        :param files: List of files to add.
+        :param language: Optional language argument.
+        """
+        for file in files:
+            if file not in self.project_files:
+                self.project_files[file] = language
+                print(f"Added file: {file} (Language: {language})")
+            else:
+                print(f"File {file} is already added to the project.")
 
 
  
