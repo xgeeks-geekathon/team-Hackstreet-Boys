@@ -1,9 +1,12 @@
 import json
+import os
 
 # Local imports
-import utils
+from . import utils
+from .openai_iface import IOpenAI
 
 
+# List of supported languages
 SUPPORTED_LANGUAGES = [
     "c",
     "cpp",
@@ -11,7 +14,7 @@ SUPPORTED_LANGUAGES = [
     "js"
 ]
 
-
+# Default stest config
 DEFAULT_CONFIG = {
     "tracked_files": {},
     "language": "",
@@ -20,9 +23,23 @@ DEFAULT_CONFIG = {
 }
 
 
+# @brief Checks if a given directory is a stest environment
+# @return True if the directory is a stest environment, False otherwise
+def cwd_is_stest_environment() -> bool:
+    if not os.path.exists(".stest"):
+        return False
+
+    if not os.path.isfile(".stest/config.json"):
+        return False
+
+    return True
+
+
+
 class Stest:
     def __init__(self):
         self.config = None
+        self.openai_iface = IOpenAI()
 
 
     ###############################
@@ -31,7 +48,10 @@ class Stest:
 
     # @brief Initializes a new stest environment
     # @param path Path to the stest environment
-    def init(self, str: path) -> None:
+    def init(self, path: str) -> None:
+        if cwd_is_stest_environment():
+            raise Exception("The current directory already contains a stest environment.")
+
         utils.create_dir(path)
         self.__create_config_file(path)
         self.__load_config_file(path)
@@ -40,12 +60,23 @@ class Stest:
 
     # @brief Adds a file to the tracked files
     # @param file Path to the file
-    def add(self, str: file) -> None:
-        pass
+    def add(self, path: str) -> None:
+        if not cwd_is_stest_environment():
+            raise Exception("The current directory is not a stest environment.")
+
+        if not os.path.exists(path):
+            raise Exception(f"No such file or directory: {path}")
+
+        if not os.path.isfile(path):
+            # add all files in the directory
+            pass
 
 
     # @brief Creates the tests for the tracked files
     def create_tests(self) -> None:
+        if not cwd_is_stest_environment():
+            raise Exception("The current directory is not a stest environment.")
+
         for file in self.config["tracked_files"]:
             if self.__file_has_changed(file):
                 print("File has changed: {}".format(file))
@@ -57,35 +88,35 @@ class Stest:
 
     # @brief Creates the default config file
     # @param path Path to the config file
-    def __create_config_file(self, str: path) -> None:
+    def __create_config_file(self, path: str) -> None:
         with open(path + "/config.json", "w") as f:
             json.dump(DEFAULT_CONFIG, f, indent=4)
 
 
     # @brief Loads the config file
     # @param path Path to the config file
-    def __load_config_file(self, str: path) -> None:
+    def __load_config_file(self, path: str) -> None:
         with open(path, "r") as f:
             self.config = json.load(f)
 
 
     # @brief Saves the config file
     # @param path Path to the config file
-    def __save_config_file(self, str: path) -> None:
+    def __save_config_file(self, path: str) -> None:
         with open(path, "w") as f:
             json.dump(self.config, f, indent=4)
 
 
     # @brief Checks if a file is being tracked by stest
     # @param file Path to the file
-    def __file_is_tracked(self, str: file) -> bool:
+    def __file_is_tracked(self, file: str) -> bool:
         return file in self.config["tracked_files"]
 
 
     # @brief Checks if a file has changed
     # @param file Path to the file
     # @return True if the file has changed, False otherwise
-    def __file_has_changed(self, str: file) -> bool:
+    def __file_has_changed(self, file: str) -> bool:
         if not self.__file_is_tracked(file):
             return False
 
@@ -94,23 +125,28 @@ class Stest:
             return True
 
         return False
-
-
-    # @brief Checks if a given directory is a stest environment
-    # @return True if the directory is a stest environment, False otherwise
-    def __cwd_is_stest_environment(self) -> bool:
-        if not os.path.exists(".stest"):
-            return False
-
-        if not os.path.isfile(".stest/config.json"):
-            return False
-
-        return True
-
     
+
     # @brief Checks if a given language is supported
     # @param language Language to check
     # @return True if the language is supported, False otherwise
-    def __language_is_supported(self, str: language) -> bool:
+    def __language_is_supported(self, language: str) -> bool:
         return language in SUPPORTED_LANGUAGES
+
+
+    # @brief Checks if the content of a file matches the given language
+    # @param file Path to the file
+    # @param language Language to check
+    # @return True if the content of the file matches the language, False otherwise
+    def __file_content_matches_language(self, file: str, language: str) -> bool:
+        initial_prompt = f"Is the following file written in {language}?"
+        file_content = utils.get_file_content(file)
+        response = self.openai_iface.send_data_in_chunks_and_get_response(initial_prompt, file_content)
+        return response["choices"][0]["text"] == "Yes"
+
+
+    def __track_all_files_in_directory(self, directory: str) -> None:
+        for root, dirs, files in os.walk(directory):
+            for file in files:
+                self.__track_file(file)
 
