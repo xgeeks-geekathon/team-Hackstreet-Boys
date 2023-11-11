@@ -32,8 +32,8 @@ class IOpenAI:
         self.max_tokens = max_tokens
         self.model_token_limit = model_token_limit
 
-        messages = []
-        responses = []
+        self.messages = []
+        self.responses = []
 
     ###############################
     # Public methods              #
@@ -46,22 +46,23 @@ class IOpenAI:
     # @return The response from the model.
     #
     # @throws ValueError if prompt is not set.
-    def send_and_get_response(self, prompt: str = None) -> str:
-        if not prompt:
-            raise ValueError("prompt must be set")
-
-        self.messages.append(prompt)
-        response = client.completions.create(model=self.model, messages=self.messages)
-        chatgpt_response = response.choices[0].message["content"].strip()
-        self.responses.append(chatgpt_response)
-
-        return chatgpt_response
+    def send_messages_and_get_response(self):
+        return client.chat.completions.create(
+            messages=self.messages,
+            model=self.model,
+            max_tokens=self.max_tokens,
+        )
 
 
     # @brief Sends the given content to the model in chunks.
     #
     # @details Sends the prompt at the start of the conversation
     #          and then sends the data_to_send to the model in chunks.
+    #
+    #          Chat GPT will perform the task described in initial_prompt
+    #          on the data after all the chunks have been fed.
+    #
+    #          This function returns the response as a string.
     #
     # @param initial_prompt The prompt to send to the model at the start of the conversation.
     # @param data_to_send The data to send to the model in chunks.
@@ -79,20 +80,33 @@ class IOpenAI:
         if not data_to_send:
             raise ValueError("data_to_send must be set")
 
+        # Split the data into chunks
         tokenizer = tiktoken.encoding_for_model(self.model)
         chunk_size = self.max_tokens - len(tokenizer.encode(initial_prompt))
         chunks = self.__split_data_into_chunks(data_to_send, chunk_size)
 
-        self.messages = [
-            {"role": "user", "content": initial_prompt},
-            {"role": "user", "content": prompts.SEND_FILE_PROMPT},
-        ]
+        # Set the initial prompt (the task Cchat GPT must perform after the information is sent)
+        # Inform chat GPT that the information is being sent
+        self.__append_message_as(initial_prompt, "user")
+        self.__append_message_as(prompts.SEND_FILE_PROMPT, "user")
 
+        # Send the data in chunks
         for chunk in chunks:
-            self.messages.append({"role": "user", "content": chunk})
+            self.__append_message_as(chunk, "user")
             self.__remove_oldest_chunk_if_token_limit_exceeded(tokenizer, self.model_token_limit)
 
-        self.send_and_get_response(prompts.ALL_PARTS_SENT_PROMPT)
+            response = self.send_messages_and_get_response()
+
+        # Send transmission end signal
+        self.__append_message_as(prompts.ALL_PARTS_SENT_PROMPT, "user")
+        response = self.send_messages_and_get_response()
+        return response.choices[0].message.content.split() 
+
+
+    # @brief Clears the message history
+    def clear_message_history(self) -> None:
+        self.messages = []
+
 
     ###############################
     # Private methods             #
@@ -125,4 +139,9 @@ class IOpenAI:
             > model_token_limit
         ):
             self.messages.pop(1)
+
+    
+    # @brief Appends the given message to the messages list as the given role.
+    def __append_message_as(self, message: str, role: str) -> None:
+        self.messages.append({"role": role, "content": message})
 

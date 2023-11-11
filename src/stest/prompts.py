@@ -39,6 +39,4 @@ SEND_FILE_PROMPT = """
 """
 
 # This prompt informs CHAT-GPT that the file has been fully sent.
-ALL_PARTS_SENT_PROMPT = """
-    ALL PARTS SENT
-"""
+ALL_PARTS_SENT_PROMPT = "ALL PARTS SENT"

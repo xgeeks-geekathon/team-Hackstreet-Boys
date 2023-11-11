@@ -16,6 +16,10 @@ def main():
     add_parser.add_argument("files", nargs="+", help="Files to add")
     
 
+    # Subparser for remove
+    remove_parser = subparsers.add_parser("remove", help="Remove files")
+    remove_parser.add_argument("files", nargs="+", help="Files to remove")
+
     # Subparser for create-tests
     subparsers.add_parser("create-tests", help="Create tests")
 
@@ -28,12 +32,12 @@ def main():
             app.init(args.projectDir, args.language)
         elif args.command == "add":
             app.add(args.files)
+        elif args.command == "remove":
+            app.remove(args.files)
         elif args.command == "create-tests":
             app.create_tests()
     except Exception as e:
         print(e.__cause__)
-        # Print stack trace
-        raise e
 
 
 if __name__ == "__main__":
