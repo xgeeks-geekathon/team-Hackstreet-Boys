@@ -38,3 +38,7 @@ def is_posix():
 def relative_path_to_absolute_path(path: str) -> str:
     return os.path.abspath(path)
 
+
+def is_dir(path):
+    return os.path.isdir(path)
+
