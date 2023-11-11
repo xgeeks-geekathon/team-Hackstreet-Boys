@@ -6,16 +6,7 @@ from . import utils
 from .openai_iface import IOpenAI
 from . import prompts
 
-
 ########################################################################
-
-# List of supported languages
-SUPPORTED_LANGUAGES = [
-    "c",
-    "cpp",
-    "py",
-    "js"
-]
 
 # List of supported testing frameworks
 # for each language
@@ -42,6 +33,7 @@ DIR_SEPARATOR = "\\"
 if utils.is_posix():
     DIR_SEPARATOR = "/"
 
+
 ########################################################################
 
 class Stest:
@@ -64,7 +56,6 @@ class Stest:
 
         return True
 
-     
     # @brief Creates the default config file
     # @param path Path to the config file
     def __create_config_file(self, path: str, language: str) -> None:
@@ -73,13 +64,11 @@ class Stest:
         with open(path, "w") as f:
             json.dump(DEFAULT_CONFIG, f, indent=4)
 
-
     # @brief Loads the config file
     # @param path Path to the config file
     def __load_config_file(self, path: str) -> None:
         with open(path, "r") as f:
             self.config = json.load(f)
-
 
     # @brief Saves the config file
     # @param path Path to the config file
@@ -87,12 +76,10 @@ class Stest:
         with open(path, "w") as f:
             json.dump(self.config, f, indent=4)
 
-
     # @brief Checks if a file is being tracked by stest
     # @param file Path to the file
     def __file_is_tracked(self, file: str) -> bool:
         return file in self.config["tracked_files"]
-
 
     # @brief Checks if a file has changed
     # @param file Path to the file
@@ -106,15 +93,6 @@ class Stest:
             return True
 
         return False
-    
-
-    # @brief Checks if a given language is supported
-    # @param language Language to check
-    # @return True if the language is supported, False otherwise
-    def __language_is_supported(self, language: str) -> bool:
-        lower_language = language.lower().strip()
-        return lower_language in SUPPORTED_LANGUAGES
-
 
     # @brief Checks if the content of a file matches the given language
     # @param file Path to the file
@@ -125,7 +103,6 @@ class Stest:
         file_content = utils.get_file_content(file)
         response = self.openai_iface.send_data_in_chunks_and_get_response(initial_prompt, file_content)
         return response[0] == "Yes"
-
 
     # @brief Sets a file as tracked
     #
@@ -144,7 +121,6 @@ class Stest:
             }
             self.__save_config_file(STEST_DIR + DIR_SEPARATOR + STEST_CONFIG_FILE)
 
-
     # @brief Tracks all files in a given directory
     def __track_all_files_in_directory(self, directory: str) -> None:
         for root, dirs, files in os.walk(directory):
@@ -153,7 +129,6 @@ class Stest:
                     self.__track_file(file)
                 except Exception as e:
                     print(e)
-
 
     ###############################
     # Public methods              #
@@ -165,18 +140,11 @@ class Stest:
         if self.__cwd_is_stest_environment():
             raise Exception("The current directory already contains a stest environment.")
 
-        if not self.__language_is_supported(language):
-            message = f"Language {language} is not supported. Supported languages are: "
-            for lang in SUPPORTED_LANGUAGES:
-                message += "[" + lang + "]"
-            raise Exception(message)
-
         utils.create_dir(path + DIR_SEPARATOR + STEST_DIR)
         config_file_path = path + DIR_SEPARATOR + STEST_DIR + DIR_SEPARATOR + STEST_CONFIG_FILE
         self.__create_config_file(config_file_path, language)
         self.__load_config_file(config_file_path)
         print("Initialized empty stest environment.")
-
 
     # @brief Adds a list of files to the tracked files
     # @param paths List of paths to the files 
@@ -193,10 +161,32 @@ class Stest:
                 pass
 
             elif self.__file_is_tracked(path):
-                raise Exception(f"The file {path} is already being tracked. Use 'stest remove' to stop tracking the file.")
+                raise Exception(
+                    f"The file {path} is already being tracked. Use 'stest remove' to stop tracking the file.")
             else:
                 self.__track_file(path)
 
+    def remove(self, paths: list[str]) -> None:
+        if not self.__cwd_is_stest_environment():
+            raise Exception("The current directory is not a stest environment.")
+
+        self.__load_config_file(STEST_DIR + DIR_SEPARATOR + STEST_CONFIG_FILE)
+
+        for path in paths:
+            if not os.path.exists(path):
+                raise Exception(f"No such file or directory: {path}")
+            elif not self.__file_is_tracked(path):
+                raise Exception(f"The file {path} is not being tracked.")
+            else:
+                self.__untrack_file(path)
+
+        self.__save_config_file(STEST_DIR + DIR_SEPARATOR + STEST_CONFIG_FILE)
+
+    def __untrack_file(self, file: str) -> None:
+        if file in self.config["tracked_files"]:
+            del self.config["tracked_files"][file]
+        else:
+            raise Exception(f"The file {file} is not being tracked.")
 
     # @brief Creates the tests for the tracked files
     def create_tests(self) -> None:
@@ -206,6 +196,3 @@ class Stest:
         for file in self.config["tracked_files"]:
             if self.__file_has_changed(file):
                 print("File has changed: {}".format(file))
-
-
- 
