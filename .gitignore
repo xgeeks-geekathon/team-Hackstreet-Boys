@@ -2,3 +2,4 @@
 dist
 stest.spec
 build
+__pycache__
