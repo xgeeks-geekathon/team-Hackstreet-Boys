@@ -1,6 +1,5 @@
 dist
 stest.spec
-build
 __pycache__
 .stest
 .idea
