@@ -1,7 +1,7 @@
 import json
 
 # Local imports
-import utils
+from .utils import *
 
 
 SUPPORTED_LANGUAGES = [
@@ -31,8 +31,8 @@ class Stest:
 
     # @brief Initializes a new stest environment
     # @param path Path to the stest environment
-    def init(self, str: path) -> None:
-        utils.create_dir(path)
+    def init(self, path : str) -> None:
+        create_dir(path)
         self.__create_config_file(path)
         self.__load_config_file(path)
         print("Initialized empty stest environment.")
@@ -40,8 +40,10 @@ class Stest:
 
     # @brief Adds a file to the tracked files
     # @param file Path to the file
-    def add(self, str: file) -> None:
-        pass
+    def add(self, *files) -> None:
+        for file in files:
+            print("Adding file:", file)
+
 
 
     # @brief Creates the tests for the tracked files
@@ -57,35 +59,35 @@ class Stest:
 
     # @brief Creates the default config file
     # @param path Path to the config file
-    def __create_config_file(self, str: path) -> None:
+    def __create_config_file(self, path : str) -> None:
         with open(path + "/config.json", "w") as f:
             json.dump(DEFAULT_CONFIG, f, indent=4)
 
 
     # @brief Loads the config file
     # @param path Path to the config file
-    def __load_config_file(self, str: path) -> None:
+    def __load_config_file(self, path: str) -> None:
         with open(path, "r") as f:
             self.config = json.load(f)
 
 
     # @brief Saves the config file
     # @param path Path to the config file
-    def __save_config_file(self, str: path) -> None:
+    def __save_config_file(self, path: str) -> None:
         with open(path, "w") as f:
             json.dump(self.config, f, indent=4)
 
 
     # @brief Checks if a file is being tracked by stest
     # @param file Path to the file
-    def __file_is_tracked(self, str: file) -> bool:
+    def __file_is_tracked(self, file: str) -> bool:
         return file in self.config["tracked_files"]
 
 
     # @brief Checks if a file has changed
     # @param file Path to the file
     # @return True if the file has changed, False otherwise
-    def __file_has_changed(self, str: file) -> bool:
+    def __file_has_changed(self, file : str) -> bool:
         if not self.__file_is_tracked(file):
             return False
 
@@ -111,6 +113,6 @@ class Stest:
     # @brief Checks if a given language is supported
     # @param language Language to check
     # @return True if the language is supported, False otherwise
-    def __language_is_supported(self, str: language) -> bool:
+    def __language_is_supported(self, language : str) -> bool:
         return language in SUPPORTED_LANGUAGES
 
