@@ -22,6 +22,9 @@ sudo ./build.sh  # Linux and MacOS
 
 The compiled binaries will be located in the `dist` directory.
 
+> **Note:** If you are having problems with the binaries created py `pyinstaller`, you can also run **stest** directly
+by running `python src/main.py` in the root directory of the project.
+
 ## Usage
 
 #### Init a new __stest__ testing environment.
