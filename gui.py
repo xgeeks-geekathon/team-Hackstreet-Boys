@@ -70,6 +70,8 @@ class Gradebook(ttk.Frame):
 
         submit_btn.pack(side=RIGHT, padx=5)
 
+    
+
     def create_meter(self):
         meter_frame = ttk.Frame(self)
         meter_frame.pack()
@@ -84,18 +86,16 @@ class Gradebook(ttk.Frame):
             subtext="Final Score",
             interactive=True,
         )
-
         meter.pack()
 
-        self.final_score_input.configure(textvariable=meter.amountusedvar)
         self.final_score_input.configure(textvariable=self.final_score)
-
-        self.final_score.set(meter.amountusedvar)
 
         def update_meter(*args):
             meter.set(self.final_score.get())
 
         self.final_score.trace_add('write', update_meter)
+
+
 
     def create_table(self):
         coldata = [
