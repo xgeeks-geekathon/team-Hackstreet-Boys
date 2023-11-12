@@ -180,23 +180,27 @@ class Stest:
     def __save_serialized_test_data(self, path: str, data: str) -> None:
         files = []
 
-        # Define a regular expression pattern to match code blocks
-        code_block_pattern = re.compile(r'```.*?```', re.DOTALL)
+        # I've had to change this to a more complex regex because
+        # the previous one was not working properly sometimes
+        #
+        # This is what I had before: re.compile(r'```.*?```', re.DOTALL) 
+        # If anyone in the jury knows why this is happening, please let me know.
+        # But let's be honest, no one knows regex; and if they say they do, they're lying.
+        pattern = r'```[a-zA-Z]*\n([\s\S]*?)\n```'
 
         for file_data in data.split(FILE_START_DELIMITER):
             if file_data == "":
                 continue
-
+            
             lines = file_data.split("\n")
             file_name = lines[1]
             file_content = "\n".join(lines[2:])
 
-            # Remove code blocks from file content
-            file_content = code_block_pattern.sub('', file_content)
+            filtered_file_content = re.sub(pattern, r'\1', file_content)
 
             files.append({
                 "name": file_name,
-                "content": file_content
+                "content": filtered_file_content
             })
 
         for file in files:
@@ -273,8 +277,8 @@ class Stest:
         files_to_test = []
 
         for file in self.config["tracked_files"]:
-            #if self.__file_has_changed(file):
-            files_to_test.append(file)
+            if self.__file_has_changed(file):
+                files_to_test.append(file)
 
         if len(files_to_test) == 0:
             print("No modifications since last test generation were found, aborting.")
@@ -294,7 +298,7 @@ class Stest:
         utils.create_dir(self.config["test_dir"])
         self.__save_serialized_test_data(self.config["test_dir"], response)
         self.__save_config_file(CONFIG_FILE_PATH)
-        print("Tests generated successfully.")
+        print(f"Tests have been written to {self.config['test_dir']}.")
 
 
 
