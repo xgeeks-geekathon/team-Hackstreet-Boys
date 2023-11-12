@@ -86,7 +86,7 @@ class Stest:
         config_file_path = path + DIR_SEPARATOR + STEST_DIR + DIR_SEPARATOR + STEST_CONFIG_FILE
         self.__create_config_file(config_file_path, test_dir, language)
         self.__load_config_file(config_file_path)
-        print("Initialized empty stest environment.")
+        print(f"{Fore.GREEN}Initialized empty stest environment.{Style.RESET_ALL}")
 
 
     # @brief Adds a list of files to the tracked files
@@ -111,6 +111,7 @@ class Stest:
             else:
                 self.__track_file(path)
 
+        print("Done.")
         # We dont need to save config here bc __track_file does it for us
 
 
@@ -162,7 +163,7 @@ class Stest:
             print(f"{Fore.YELLOW}No modifications since last test generation were found, aborting.{Style.RESET_ALL}")
             return
 
-        print(f"Generating tests for {len(files_to_test)} files. This may take a while.")
+        print(f"Generating tests for {Fore.LIGHTBLACK_EX}{len(files_to_test)}{Style.RESET_ALL} files. This may take a while.")
         
         data_to_send = ""
         for file in files_to_test:

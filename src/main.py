@@ -44,7 +44,6 @@ def main():
             app.status()
     except Exception as e:
         print(f"{Fore.RED}Error: {Style.RESET_ALL}{e}")
-        raise e
 
 
 if __name__ == "__main__":
