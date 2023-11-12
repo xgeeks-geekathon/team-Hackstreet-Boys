@@ -1,4 +1,4 @@
-![Stest Logo](assets/stest.png)
+<img src="assets/stest.png" width="100px" align="left" />
 
 # Stest
 
