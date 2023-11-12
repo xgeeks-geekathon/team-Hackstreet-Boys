@@ -22,7 +22,7 @@ def main():
     remove_parser.add_argument("files", nargs="+", help="Files to remove")
 
     # Subparser for status
-    status_parser = subparsers.add_parser("status", help="Show status")
+    subparsers.add_parser("status", help="Show status")
 
     # Subparser for create-tests
     subparsers.add_parser("create-tests", help="Create tests")

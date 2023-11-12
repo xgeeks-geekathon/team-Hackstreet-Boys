@@ -336,9 +336,13 @@ class Stest:
     #
     # @param file Path to the file
     def __track_file(self, file: str) -> None:
+        if not file.endswith(('.py', '.js', '.c', '.cpp')):
+            print(f"Ignoring {file}: Unsupported file extension.")
+            return
+
         if not self.__file_is_tracked(file):
             if not self.__file_content_matches_language(file, self.config["language"]):
-                raise Exception(f"File {file} does not match the current language defined for the test environment: {self.config['language']} so it's being ignored")
+                raise Exception(f"File {file} does not match the current language defined for the test environment: {self.config['language']}, so it's being ignored.")
 
             absolute_path = utils.relative_path_to_absolute_path(file)
 
@@ -351,11 +355,12 @@ class Stest:
      
     # @brief Tracks all files in a given directory
     # @param directory Path to the directory
-    def __track_all_files_in_directory(self, directory: str) -> None:
-        for root, dirs, files in os.walk(directory):
+    def __track_all_files_in_directory(self, input_dir: str) -> None:
+        for root, dirs, files in os.walk(input_dir):
             for file in files:
+                full_path = os.path.join(root, file)
                 try:
-                    self.__track_file(file)
+                    self.__track_file(full_path)
                 except Exception as e:
                     print(e)
 
@@ -375,7 +380,7 @@ class Stest:
 
     # @brief Untracks all files in a given directory
     # @param directory Path to the directory
-    def __untrack__all_files_in_directory(self, directory: str) -> None:
+    def __untrack_all_files_in_directory(self, directory: str) -> None:
         for root, dirs, files in os.walk(directory):
             for file in files:
                 try:
@@ -410,7 +415,7 @@ class Stest:
         return PREV_TEST_FILE_START_DELIMITER + "\n" + utils.get_filename(path) + file_content + "\n"
 
 
-    # @brief Saves the returned tests from Chat GPT into a file 
+    # @brief Saves the returned tests from Chat GPT into a file
     #
     # @details The returned tests from Chat GPT are a list of strings
     #          that represent the tests that were generated for a given file.
