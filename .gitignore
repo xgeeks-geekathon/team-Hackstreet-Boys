@@ -1,5 +1,5 @@
 dist
-stest.spec
+*.spec
 build
 __pycache__
 .stest

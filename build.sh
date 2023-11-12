@@ -1,3 +1,3 @@
 #!/bin/bash
 pip install -r requirements.txt
-pyinstaller --onefile --windowed --add-data "./src/*:stest" --name "stest" --clean --distpath "./dist" "./src/main.py"
+pyinstaller --onefile --name "stest" "./src/main.py"

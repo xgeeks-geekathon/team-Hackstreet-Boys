@@ -1,6 +1,7 @@
 openai
-tiktoken~=0.5.1
+tiktoken
 pyinstaller
 python-dotenv
-httpx~=0.25.1
+httpx
+httpcore
 colorama
