@@ -1,6 +1,30 @@
 # Stest
 
-AI powered universal unit testing tool.
+Stest (**Smart Test**) is a compreensive command line tool that automatically generates unit tests for your code using artificial intelligence.
+
+## Demo
+
+![Demo]()
+
+## Installation
+
+```bash
+# Clone the repo
+git clone git@github.com:xgeeks-geekathon/team-Hackstreet-Boys.git
+cd team-Hackstreet-Boys
+
+sudo ./build.sh  # Linux and MacOS
+# or
+./build.bat # Windows (admin privileges required)
+```
+
+The compiled binaries will be located in the `dist` directory.
+
+## Documentation
+
+**Stest is not a simple command line tool.** It is a complete testing environment that allows you to create and manage your tests using a simple command line interface.
+
+If you want to learn more about stest, check out the [documentation](https://stest.readthedocs.io/en/latest/).
 
 ## Usage
 
@@ -9,6 +33,12 @@ AI powered universal unit testing tool.
 ```bash
 stest init [path] -o [tests_dir] --language [language] # Inits a new stest testing environment
 ```
+
+##### Supported languages:
+- Python (`py`)
+- JavaScript (`js`)
+- C (`c`)
+- C++ (`cpp`)
 
 #### Add files to the testing environment.
 
@@ -94,3 +124,11 @@ if __name__ == '__main__':
 ```
 
 ## What's next?
+
+#### Add support for more languages and testing frameworks
+
+The 
+
+- [ ] Add support for more languages
+- [ ] Add support for more testing frameworks
+- [ ] Add test execution and output analysis
