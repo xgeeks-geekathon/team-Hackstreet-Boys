@@ -5,3 +5,4 @@ __pycache__
 .stest
 .idea
 testing
+tests
