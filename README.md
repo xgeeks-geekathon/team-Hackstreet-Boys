@@ -1,4 +1,4 @@
-<img src="assets/stest.png" width="100px" align="left" />
+<img src="assets/stest.png" width="300px"/>
 
 # Stest
 
