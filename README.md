@@ -6,7 +6,8 @@ Stest (**Smart Test**) is a compreensive command line tool that automatically ge
 
 ## Demo
 
-![Demo]()
+[![Watch the video](https://i.stack.imgur.com/Vp2cE.png)](https://youtu.be/EflNn7fg0Hk)
+
 
 ## Installation
 
