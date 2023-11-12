@@ -47,6 +47,13 @@ def relative_path_to_absolute_path(path: str) -> str:
     return os.path.abspath(path)
 
 
+# @brief Converts the given absolute path into a relative path
+# @param path Absolute path
+# @return relative_path
+def absolute_path_to_relative_path(path: str) -> str:
+    return os.path.relpath(path)
+
+
 # @brief Returns the filename from the given path
 # @param path Path to the file
 # @return filename
@@ -54,6 +61,3 @@ def get_filename(path: str) -> str:
     return os.path.basename(path)
 
 
-# @brief Converts the given string array into a string
-def str_array_to_str(arr: list) -> str:
-    return " ".join(arr)
