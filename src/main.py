@@ -1,6 +1,7 @@
 import argparse
 from stest import stest
 import os
+from colorama import Fore, Style
 
 def main():
     parser = argparse.ArgumentParser()
@@ -20,6 +21,9 @@ def main():
     remove_parser = subparsers.add_parser("remove", help="Remove files")
     remove_parser.add_argument("files", nargs="+", help="Files to remove")
 
+    # Subparser for status
+    status_parser = subparsers.add_parser("status", help="Show status")
+
     # Subparser for create-tests
     subparsers.add_parser("create-tests", help="Create tests")
 
@@ -36,8 +40,10 @@ def main():
             app.remove(args.files)
         elif args.command == "create-tests":
             app.create_tests()
+        elif args.command == "status":
+            app.status()
     except Exception as e:
-        print(e)
+        print(f"{Fore.RED}Error: {Style.RESET_ALL}{e}")
         raise e
 
 

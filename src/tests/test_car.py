@@ -1,38 +1,41 @@
 import unittest
 from car import Car
 
-class CarTest(unittest.TestCase):
-    def setUp(self):
-        self.car = Car("ABC1234", "red", 2000)
+class TestCar(unittest.TestCase):
 
-    def test_initial_car_properties(self):
-        self.assertEqual(self.car.get_plate(), "ABC1234")
-        self.assertEqual(self.car.get_color(), "red")
-        self.assertEqual(self.car.get_cc(), 2000)
-        self.assertEqual(self.car.get_passengers(), [])
+    def setUp(self):
+        self.car = Car('123ABC', 'Black', 1000)
+
+    def test_get_plate(self):
+        self.assertEqual(self.car.get_plate(), '123ABC')
 
     def test_set_plate(self):
-        self.car.set_plate("XYZ789")
-        self.assertEqual(self.car.get_plate(), "XYZ789")
+        self.car.set_plate('456DEF')
+        self.assertEqual(self.car.get_plate(), '456DEF')
+
+    def test_get_color(self):
+        self.assertEqual(self.car.get_color(), 'Black')
 
     def test_set_color(self):
-        self.car.set_color("blue")
-        self.assertEqual(self.car.get_color(), "blue")
+        self.car.set_color('Red')
+        self.assertEqual(self.car.get_color(), 'Red')
+
+    def test_get_cc(self):
+        self.assertEqual(self.car.get_cc(), 1000)
 
     def test_set_cc(self):
         self.car.set_cc(1500)
         self.assertEqual(self.car.get_cc(), 1500)
 
-    def test_add_passenger(self):
-        self.car.add_passenger("John Doe")
-        self.assertEqual(self.car.get_passengers(), ["John Doe"])
+    def test_passengers(self):
+        self.assertListEqual(self.car.get_passengers(), [])
+        self.car.add_passenger('John')
+        self.assertListEqual(self.car.get_passengers(), ['John'])
+        self.car.remove_passenger('John')
+        self.assertListEqual(self.car.get_passengers(), [])
+        with self.assertRaises(Exception) as context:
+            self.car.remove_passenger('John')
+        self.assertTrue('Passenger John not found in the car.' in str(context.exception))
 
-    def test_remove_passenger(self):
-        self.car.add_passenger("John Doe")
-        self.assertEqual(self.car.get_passengers(), ["John Doe"])
-        self.car.remove_passenger("John Doe")
-        self.assertEqual(self.car.get_passengers(), [])
-
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

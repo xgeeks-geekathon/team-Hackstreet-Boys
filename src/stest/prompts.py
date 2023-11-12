@@ -12,7 +12,7 @@ CREATE_TESTS_PROMPT = """
 
     I will now give you a set of files, where the content of each file is
     the code that you will have to write tests for. The files will be separated
-    by the delimiter 'FILE STARTS HERE'; the line that follows the delimiter will
+    by the delimiter '= FILE STARTS HERE ='; the line that follows the delimiter will
     be the name of the file.
     When I am finished, I will tell you 'ALL FILES SENT'.
 
@@ -27,6 +27,40 @@ CREATE_TESTS_PROMPT = """
 
     The file name must be all lowercase and must not contain any spaces.
     DO NOT RETURN ANYTHING BUT THE CODE.
+"""
+
+# Same as the above but used when the test file as already been created.
+# This is to avoid generating a possibly unique test file that has nothing
+# to do with the previous implementation.
+CREATE_TESTS_REFACTOR_PROMPT = """
+    You are an experienced software developer who has been hired to
+    write unit tests. You will be given a set of files and your job
+    is to write EXTENSIVE unit tests for them. The files are written in {language}
+    and the tests MUST be written using {test_framework}.
+
+    I will now give you a set of files, where the content of each file is
+    the code that you will have to write tests for. The files will be separated
+    by the delimiter '= FILE STARTS HERE ='; the line that follows the delimiter will
+    be the name of the file.
+
+    You will also be provided with the last version of the tests that you have written.
+    You MUST stick to the previous test logic and change the structure of the tests as little
+    as possible. If they exist, previous tests will be separated by the delimiter 
+    '= PREVIOUS TEST FILE STARTS HERE ='.
+
+    When I am finished, I will tell you 'ALL FILES SENT'.
+    DO NOT answer until you have received all the files.
+
+    In the end, you will return the code for the tests that you have written using
+    the same delimiter '= FILE STARTS HERE ='. The line that follows the delimiter
+    must be the name of the file that the tests are for (the original name + the "test_" prefix).
+
+    You MUST ONLY return the code for the tests that you have written. NOTHING ELSE.
+    The code MUST NOT INCLUDE MARKDOWN SYNTAX.
+
+    The file name must be all lowercase and must not contain any spaces.
+    DO NOT RETURN ANYTHING BUT THE CODE.
+
 """
 
 # This prompt is used to check if the given file is written 
