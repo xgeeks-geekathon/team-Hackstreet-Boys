@@ -44,7 +44,7 @@ DEFAULT_CONFIG = {
     "tracked_files": {},
     "language": "",
     "test_framework": "",
-    "test_command": "",
+    "test_dir": ""
 }
 
 # Dir name for stest environments
@@ -128,6 +128,7 @@ class Stest:
             if not os.path.exists(path):
                 raise Exception(f"No such file or directory: {path}")
             elif utils.is_dir(path):
+                print(f"{Fore.YELLOW}The directory {path} will be untracked recursively.{Style.RESET_ALL}")
                 self.__untrack_all_files_in_directory(path)
             elif not self.__file_is_tracked(path):
                 raise Exception(f"The file/directory {path} is not being tracked. Use 'stest add' to start tracking the file.")
@@ -139,6 +140,9 @@ class Stest:
 
 
     # @brief Creates the tests for the tracked files
+    # 
+    # This is a mess, I know. We are in a Geekathon, no time for 
+    # refactoring.
     def create_tests(self) -> None:
         if self.stest_environment_root == None:
             raise Exception("The current directory/workspace is not a stest environment.")
@@ -357,7 +361,7 @@ class Stest:
                 try:
                     self.__track_file(file)
                 except Exception as e:
-                    print(e)
+                    pass
 
     
     # @brief Untracks a file
@@ -368,20 +372,24 @@ class Stest:
         if absolute_path in self.config["tracked_files"]:
             del self.config["tracked_files"][absolute_path]
         else:
-            raise Exception(f"The file {file} is not being tracked.")
+            raise Exception(f"The file {absolute_path} is not being tracked.")
 
         self.__save_config_file(self.stest_environment_root + DIR_SEPARATOR + STEST_CONFIG_FILE)
 
 
     # @brief Untracks all files in a given directory
     # @param directory Path to the directory
-    def __untrack__all_files_in_directory(self, directory: str) -> None:
+    def __untrack_all_files_in_directory(self, directory) -> None:
         for root, dirs, files in os.walk(directory):
             for file in files:
-                try:
-                    self.__untrack_file(file)
-                except Exception as e:
-                    print(e)
+                file_path = os.path.join(root, file)
+                relative_path = os.path.relpath(file_path, directory)
+                if not relative_path.startswith(".."):
+                    try:
+                        self.__untrack_file(file_path)
+                        print(f"Untracked file {file_path}")
+                    except Exception as e:
+                        print(e)
 
 
     # @brief Builds the serialized data for a file
